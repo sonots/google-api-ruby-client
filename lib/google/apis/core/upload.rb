@@ -204,8 +204,8 @@ module Google
         #   HTTP client
         # @return [Hurley::Response]
         # @raise [Google::Apis::ServerError] Unable to send the request
-        def send_start_command(client)
-          logger.debug { sprintf('Sending upload start command to %s', url) }
+        def send_start_command(client, try = nil)
+          logger.debug { sprintf('Sending upload start command to %s (try: %s)', url, try) }
           client.send(method, url, body) do |req|
             apply_request_options(req)
             req.header[UPLOAD_PROTOCOL_HEADER] = RESUMABLE
@@ -259,10 +259,10 @@ module Google
         # @raise [Google::Apis::ServerError] An error occurred on the server and the request can be retried
         # @raise [Google::Apis::ClientError] The request is invalid and should not be retried without modification
         # @raise [Google::Apis::AuthorizationError] Authorization is required
-        def execute_once(client, &block)
+        def execute_once(client, try = nil, &block)
           case @state
           when :start
-            response = send_start_command(client)
+            response = send_start_command(client, try)
             result = process_response(response.status_code, response.header, response.body)
           when :active
             response = send_query_command(client)

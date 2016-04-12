@@ -104,7 +104,7 @@ module Google
               Retriable.retriable tries: auth_tries,
                                   on: [Google::Apis::AuthorizationError],
                                   on_retry: proc { |*| refresh_authorization } do
-                execute_once(client).tap do |result|
+                execute_once(client, try).tap do |result|
                   if block_given?
                     yield result, nil
                   end
@@ -265,10 +265,10 @@ module Google
         # @raise [Google::Apis::ServerError] An error occurred on the server and the request can be retried
         # @raise [Google::Apis::ClientError] The request is invalid and should not be retried without modification
         # @raise [Google::Apis::AuthorizationError] Authorization is required
-        def execute_once(client)
+        def execute_once(client, try = nil)
           body.rewind if body.respond_to?(:rewind)
           begin
-            logger.debug { sprintf('Sending HTTP %s %s', method, url) } unless method == :get
+            logger.debug { sprintf('Sending HTTP %s %s (try: %s)', method, url, try) } unless method == :get
             response = client.send(method, url, body) do |req|
               # Temporary workaround for Hurley bug where the connection preference
               # is ignored and it uses nested anyway
