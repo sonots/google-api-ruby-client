@@ -235,8 +235,8 @@ module Google
         #  Result object
         # @return [Object] result if no block given
         # @yield [result, nil] if block given
-        def success(result, &block)
-          logger.debug { sprintf('Success - %s', PP.pp(result, '')) }
+        def success(result, method = nil, &block)
+          logger.debug { sprintf('Success - %s', PP.pp(result, '')) } unless method == :get
           block.call(result, nil) if block_given?
           result
         end
@@ -268,7 +268,7 @@ module Google
         def execute_once(client)
           body.rewind if body.respond_to?(:rewind)
           begin
-            logger.debug { sprintf('Sending HTTP %s %s', method, url) }
+            logger.debug { sprintf('Sending HTTP %s %s', method, url) } unless method == :get
             response = client.send(method, url, body) do |req|
               # Temporary workaround for Hurley bug where the connection preference
               # is ignored and it uses nested anyway
@@ -281,10 +281,10 @@ module Google
               # End workaround
               apply_request_options(req)
             end
-            logger.debug { response.status_code }
-            logger.debug { response.inspect }
+            logger.debug { response.status_code } unless method == :get
+            logger.debug { response.inspect } unless method == :get
             response = process_response(response.status_code, response.header, response.body)
-            success(response)
+            success(response, method)
           rescue => e
             logger.debug { sprintf('Caught error %s', e) }
             error(e, rethrow: true)
